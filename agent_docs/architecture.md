@@ -48,3 +48,26 @@ JSONL files written to `output/` (gitignored):
 - `github_core.jsonl` — GitHub repos tagged with core project ID topics
 
 DuckDB views over these files: `icc-data-views.sql`
+
+## MCP Server
+
+The `icc_eval_server` package exposes the data via a FastMCP server (streamable HTTP transport).
+
+### Data flow
+
+```
+output/*.jsonl → materialize.py → output/icc-eval.duckdb → server.py (FastMCP)
+```
+
+### Security layers
+
+1. SQL prefix regex — only SELECT/WITH/SHOW/DESCRIBE/PRAGMA/EXPLAIN/SUMMARIZE
+2. DuckDB `read_only=True` — connection-level write protection
+3. `enable_external_access = false` — blocks file-system functions (read_csv, glob, httpfs)
+4. `describe_table` validates table name against actual table list
+
+### Tools
+
+- `query_sql(sql, limit)` — general-purpose read-only SQL with schema + examples in description
+- `list_tables()` — table names
+- `describe_table(table_name)` — column details

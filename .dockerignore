@@ -1,0 +1,9 @@
+.git
+.env
+.claude
+output/*.jsonl
+client_secret_*
+__pycache__
+*.pyc
+test_ga_auth.py
+plan.md
