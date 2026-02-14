@@ -58,6 +58,25 @@ Six JSONL files are written to the output directory:
 | `citation_links.jsonl` | iCite | Grant publication PMID ↔ citing PMID mappings |
 | `citing_icite.jsonl` | iCite | Citation metrics for citing publications |
 
+## Roadmap
+
+### Data Collection
+
+- [x] Fetch grant project records from NIH Reporter
+- [x] Fetch publication links from NIH Reporter
+- [x] Fetch publication metadata from Europe PMC
+- [x] Fetch iCite citation metrics for grant-associated publications
+- [x] Build citation links from iCite `cited_by` fields
+- [x] Fetch iCite metrics for citing publications
+- [ ] Collect grants supported by CFDE
+- [ ] Collect GitHub repository metrics
+- [ ] Collect Google Analytics data
+
+### Platform
+
+- [ ] User authentication
+- [ ] Data access control (authorization)
+
 ## Data Sources
 
 - [NIH Reporter API](https://api.reporter.nih.gov/)
