@@ -11,4 +11,7 @@ dependencies = [
     "tenacity>=9.0",
     "typer>=0.15",
     "pyyaml>=6.0",
+    "google-analytics-data>=0.20.0",
+    "google-analytics-admin>=0.27.0",
+    "google-auth-oauthlib>=1.2.4",
 ]
