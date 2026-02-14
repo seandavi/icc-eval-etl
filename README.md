@@ -13,6 +13,8 @@ collection.yaml → NIH Reporter (projects + publication links) → extract PMID
                                                          iCite cited_by → citing PMIDs
                                                          iCite (citing pub metrics)
                                                                       ↓
+                                                         OpenAlex (grant + citing works)
+                                                                      ↓
                   GitHub (repos by project ID topic) ──────→ JSONL output files
 ```
 
@@ -47,7 +49,7 @@ core_project_identifiers:
 
 ## Output
 
-Seven JSONL files are written to the output directory:
+Nine JSONL files are written to the output directory:
 
 | File | Source | Description |
 |------|--------|-------------|
@@ -57,6 +59,8 @@ Seven JSONL files are written to the output directory:
 | `icite.jsonl` | iCite | Citation metrics for grant-associated publications |
 | `citation_links.jsonl` | iCite | Grant publication PMID ↔ citing PMID mappings |
 | `citing_icite.jsonl` | iCite | Citation metrics for citing publications |
+| `openalex.jsonl` | OpenAlex | Work records for grant-associated publications |
+| `citing_openalex.jsonl` | OpenAlex | Work records for citing publications |
 | `github_core.jsonl` | GitHub | Repositories tagged with core project ID topics |
 
 ## Roadmap
@@ -69,6 +73,7 @@ Seven JSONL files are written to the output directory:
 - [x] Fetch iCite citation metrics for grant-associated publications
 - [x] Build citation links from iCite `cited_by` fields
 - [x] Fetch iCite metrics for citing publications
+- [x] Fetch OpenAlex work records for grant-associated and citing publications
 - [ ] Collect grants supported by CFDE
 - [x] Collect GitHub repository metrics
 - [ ] Collect Google Analytics data
@@ -83,6 +88,7 @@ Seven JSONL files are written to the output directory:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GITHUB_TOKEN` | No | GitHub personal access token. Without it, API is limited to 10 requests/minute. |
+| `OPENALEX_API_KEY` | No | OpenAlex API key ([free account](https://openalex.org)). Without it, limited to 100 requests/day. |
 
 Copy `.env.example` or create a `.env` file in the project root — it is loaded automatically at startup.
 
@@ -91,4 +97,5 @@ Copy `.env.example` or create a `.env` file in the project root — it is loaded
 - [NIH Reporter API](https://api.reporter.nih.gov/)
 - [Europe PMC REST API](https://europepmc.org/RestfulWebService)
 - [iCite API](https://icite.od.nih.gov/api)
+- [OpenAlex API](https://docs.openalex.org/)
 - [GitHub REST API](https://docs.github.com/en/rest)

@@ -27,6 +27,8 @@
 --   icite             - iCite citation metrics for grant-associated publications
 --   citation_links    - Cited PMID <-> citing PMID edge list
 --   citing_icite      - iCite metrics for citing publications
+--   openalex          - OpenAlex work records for grant-associated publications
+--   citing_openalex   - OpenAlex work records for citing publications
 --   github_repos      - GitHub repos tagged with project ID topics
 
 -- ============================================================================
@@ -168,6 +170,77 @@ select
     len(cited_by)                   as cited_by_count,
     len("references")               as reference_count
 from read_json_auto('output/citing_icite.jsonl');
+
+-- ============================================================================
+-- openalex
+-- OpenAlex work records for grant-associated publications. Rich metadata
+-- including topics, open access status, FWCI, and authorship details.
+-- Joined to grant PMIDs via the ids.pmid field.
+-- ============================================================================
+create or replace view openalex as
+select
+    id                              as openalex_id,
+    doi,
+    title,
+    display_name,
+    publication_year,
+    publication_date,
+    ids->>'pmid'                    as pmid_url,
+    regexp_extract(ids->>'pmid', '(\d+)$')::int as pmid,
+    type,
+    language,
+    primary_location->>'source'     as primary_source,
+    open_access->>'is_oa'           as is_oa,
+    open_access->>'oa_status'       as oa_status,
+    cited_by_count,
+    fwci,
+    biblio->>'volume'               as volume,
+    biblio->>'issue'                as issue,
+    biblio->>'first_page'           as first_page,
+    biblio->>'last_page'            as last_page,
+    is_retracted,
+    referenced_works_count,
+    primary_topic->>'display_name'  as primary_topic,
+    primary_topic->>'subfield'      as primary_subfield,
+    len(authorships)                as author_count,
+    len(topics)                     as topic_count,
+    len(mesh)                       as mesh_count
+from read_json_auto('output/openalex.jsonl');
+
+-- ============================================================================
+-- citing_openalex
+-- OpenAlex work records for publications that cite the grant-associated papers.
+-- Same schema as openalex view but covers the citation neighborhood.
+-- ============================================================================
+create or replace view citing_openalex as
+select
+    id                              as openalex_id,
+    doi,
+    title,
+    display_name,
+    publication_year,
+    publication_date,
+    ids->>'pmid'                    as pmid_url,
+    regexp_extract(ids->>'pmid', '(\d+)$')::int as pmid,
+    type,
+    language,
+    primary_location->>'source'     as primary_source,
+    open_access->>'is_oa'           as is_oa,
+    open_access->>'oa_status'       as oa_status,
+    cited_by_count,
+    fwci,
+    biblio->>'volume'               as volume,
+    biblio->>'issue'                as issue,
+    biblio->>'first_page'           as first_page,
+    biblio->>'last_page'            as last_page,
+    is_retracted,
+    referenced_works_count,
+    primary_topic->>'display_name'  as primary_topic,
+    primary_topic->>'subfield'      as primary_subfield,
+    len(authorships)                as author_count,
+    len(topics)                     as topic_count,
+    len(mesh)                       as mesh_count
+from read_json_auto('output/citing_openalex.jsonl');
 
 -- ============================================================================
 -- github_repos
