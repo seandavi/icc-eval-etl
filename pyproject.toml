@@ -14,4 +14,11 @@ dependencies = [
     "google-analytics-data>=0.20.0",
     "google-analytics-admin>=0.27.0",
     "google-auth-oauthlib>=1.2.4",
+    "mcp[cli]>=1.26.0",
+    "duckdb>=1.4.4",
+]
+
+[dependency-groups]
+dev = [
+    "matplotlib>=3.10.8",
 ]
