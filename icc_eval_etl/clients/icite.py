@@ -6,7 +6,7 @@ from icc_eval_etl.models.icite import ICiteRecord, ICiteResponse
 logger = logging.getLogger(__name__)
 
 ICITE_BASE = "https://icite.od.nih.gov"
-BATCH_SIZE = 1000
+BATCH_SIZE = 200
 
 
 class ICiteClient(BaseClient):

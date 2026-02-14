@@ -16,8 +16,14 @@ class ICiteRecord(BaseModel):
     is_research_article: bool | None = None
     is_clinical: bool | None = None
     provisional: bool | None = None
+    cited_by: list[int] | None = None
 
 
 class ICiteResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
     data: list[ICiteRecord] = []
+
+
+class CitationLink(BaseModel):
+    cited_pmid: int
+    citing_pmid: int

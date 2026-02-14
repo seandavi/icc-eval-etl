@@ -10,6 +10,9 @@ collection.yaml → NIH Reporter (projects + publication links) → extract PMID
                                                          Europe PMC (pub metadata)
                                                          iCite (citation metrics)
                                                                       ↓
+                                                         iCite cited_by → citing PMIDs
+                                                         iCite (citing pub metrics)
+                                                                      ↓
                                                               JSONL output files
 ```
 
@@ -44,14 +47,16 @@ core_project_identifiers:
 
 ## Output
 
-Four JSONL files are written to the output directory:
+Six JSONL files are written to the output directory:
 
 | File | Source | Description |
 |------|--------|-------------|
 | `projects.jsonl` | NIH Reporter | Grant project records |
 | `publication_links.jsonl` | NIH Reporter | Core project ↔ PMID associations |
 | `publications.jsonl` | Europe PMC | Publication metadata |
-| `icite.jsonl` | iCite | Citation metrics |
+| `icite.jsonl` | iCite | Citation metrics for grant-associated publications |
+| `citation_links.jsonl` | iCite | Grant publication PMID ↔ citing PMID mappings |
+| `citing_icite.jsonl` | iCite | Citation metrics for citing publications |
 
 ## Data Sources
 
