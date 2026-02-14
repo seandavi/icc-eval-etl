@@ -13,7 +13,7 @@ collection.yaml → NIH Reporter (projects + publication links) → extract PMID
                                                          iCite cited_by → citing PMIDs
                                                          iCite (citing pub metrics)
                                                                       ↓
-                                                              JSONL output files
+                  GitHub (repos by project ID topic) ──────→ JSONL output files
 ```
 
 ## Setup
@@ -47,7 +47,7 @@ core_project_identifiers:
 
 ## Output
 
-Six JSONL files are written to the output directory:
+Seven JSONL files are written to the output directory:
 
 | File | Source | Description |
 |------|--------|-------------|
@@ -57,6 +57,7 @@ Six JSONL files are written to the output directory:
 | `icite.jsonl` | iCite | Citation metrics for grant-associated publications |
 | `citation_links.jsonl` | iCite | Grant publication PMID ↔ citing PMID mappings |
 | `citing_icite.jsonl` | iCite | Citation metrics for citing publications |
+| `github_core.jsonl` | GitHub | Repositories tagged with core project ID topics |
 
 ## Roadmap
 
@@ -69,7 +70,7 @@ Six JSONL files are written to the output directory:
 - [x] Build citation links from iCite `cited_by` fields
 - [x] Fetch iCite metrics for citing publications
 - [ ] Collect grants supported by CFDE
-- [ ] Collect GitHub repository metrics
+- [x] Collect GitHub repository metrics
 - [ ] Collect Google Analytics data
 
 ### Platform
@@ -77,8 +78,17 @@ Six JSONL files are written to the output directory:
 - [ ] User authentication
 - [ ] Data access control (authorization)
 
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GITHUB_TOKEN` | No | GitHub personal access token. Without it, API is limited to 10 requests/minute. |
+
+Copy `.env.example` or create a `.env` file in the project root — it is loaded automatically at startup.
+
 ## Data Sources
 
 - [NIH Reporter API](https://api.reporter.nih.gov/)
 - [Europe PMC REST API](https://europepmc.org/RestfulWebService)
 - [iCite API](https://icite.od.nih.gov/api)
+- [GitHub REST API](https://docs.github.com/en/rest)

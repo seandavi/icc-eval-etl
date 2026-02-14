@@ -3,6 +3,9 @@ import logging
 from pathlib import Path
 
 import typer
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from icc_eval_etl.config import load_config
 from icc_eval_etl.pipeline.orchestrator import run_pipeline
