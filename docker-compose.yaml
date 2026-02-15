@@ -1,0 +1,22 @@
+services:
+  mcp-server:
+    build: .
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.icc-eval-mcp.rule=Host(`icc-eval-mcp.cancerdatasci.org`)"
+      - "traefik.http.routers.icc-eval-mcp.entrypoints=websecure"
+      - "traefik.http.routers.icc-eval-mcp.tls=true"
+      - "traefik.http.routers.icc-eval-mcp.tls.certresolver=cloudflare"
+      - "traefik.http.services.icc-eval-mcp.loadbalancer.server.port=8000"
+
+networks:
+  proxy:
+    external: true

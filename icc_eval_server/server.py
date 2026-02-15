@@ -11,6 +11,7 @@ import logging
 from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from icc_eval_server.db import ReadOnlyDatabase
 
@@ -185,6 +186,9 @@ def main() -> None:
 
     mcp.settings.host = args.host
     mcp.settings.port = args.port
+    mcp.settings.transport_security = TransportSecuritySettings(
+        enable_dns_rebinding_protection=False,
+    )
     mcp.run(transport="streamable-http")
 
 

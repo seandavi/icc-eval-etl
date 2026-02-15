@@ -16,9 +16,10 @@ COPY icc_eval_server/ icc_eval_server/
 COPY output/icc-eval.duckdb output/icc-eval.duckdb
 
 # Run as non-root user
-RUN adduser --disabled-password --gecos '' appuser
+RUN adduser --disabled-password --gecos '' appuser \
+    && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
 
-CMD ["uv", "run", "python", "-m", "icc_eval_server.server", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/.venv/bin/python", "-m", "icc_eval_server.server", "--host", "0.0.0.0", "--port", "8000"]
