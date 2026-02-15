@@ -1,12 +1,10 @@
 """Read-only DuckDB query execution for the MCP server."""
 
-import logging
 import re
 from pathlib import Path
 
 import duckdb
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 # Only allow read-only statement types
 _ALLOWED_PREFIXES = re.compile(
@@ -54,7 +52,7 @@ class ReadOnlyDatabase:
         # Wrap in a LIMIT if not already present to avoid runaway queries
         wrapped = f"SELECT * FROM ({sql}) AS _q LIMIT {limit}"
 
-        logger.debug("Executing query (limit=%d): %s", limit, sql[:200])
+        logger.debug("Executing query (limit={limit}): {sql}", limit=limit, sql=sql[:200])
         result = self._con.execute(wrapped)
         columns = [desc[0] for desc in result.description]
         rows = result.fetchall()

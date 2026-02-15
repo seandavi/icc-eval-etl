@@ -9,12 +9,11 @@ Usage:
 """
 
 import argparse
-import logging
+import sys
 from pathlib import Path
 
 import duckdb
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 VIEWS_SQL = Path(__file__).resolve().parent.parent / "icc-data-views.sql"
 
@@ -44,21 +43,21 @@ def materialize(output_path: Path, views_sql: Path = VIEWS_SQL) -> None:
     con = duckdb.connect(str(output_path))
     try:
         # Execute the views SQL to create views over JSONL files
-        logger.info("Loading views from %s", views_sql)
+        logger.info("Loading views from {views_sql}", views_sql=views_sql)
         con.execute(views_sql.read_text())
 
         # Materialize each view as a table
         for view in VIEW_NAMES:
-            logger.info("Materializing %s...", view)
+            logger.info("Materializing {view}...", view=view)
             con.execute(f"CREATE TABLE {view}_tbl AS SELECT * FROM {view}")
             count = con.execute(f"SELECT count(*) FROM {view}_tbl").fetchone()[0]
-            logger.info("  %s: %d rows", view, count)
+            logger.info("  {view}: {count} rows", view=view, count=count)
 
             # Drop the view and rename the table to take its place
             con.execute(f"DROP VIEW {view}")
             con.execute(f"ALTER TABLE {view}_tbl RENAME TO {view}")
 
-        logger.info("Materialized %d tables into %s", len(VIEW_NAMES), output_path)
+        logger.info("Materialized {n} tables into {path}", n=len(VIEW_NAMES), path=output_path)
     finally:
         con.close()
 
@@ -80,9 +79,11 @@ def main() -> None:
     parser.add_argument("-v", "--verbose", action="store_true", help="Debug logging")
     args = parser.parse_args()
 
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    logger.remove()
+    logger.add(
+        sys.stderr,
+        level="DEBUG" if args.verbose else "INFO",
+        serialize=True,
     )
     materialize(args.output, args.views_sql)
 

@@ -8,14 +8,16 @@ Usage:
 import argparse
 import json
 import logging
+import sys
+import time
 from pathlib import Path
 
+from loguru import logger
 from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp.server import Context
 from mcp.server.transport_security import TransportSecuritySettings
 
 from database_mcp_server.db import ReadOnlyDatabase
-
-logger = logging.getLogger(__name__)
 
 TOOL_DESCRIPTION = """\
 Execute a read-only SQL query against the ICC grant evaluation database.
@@ -123,41 +125,144 @@ def _get_db() -> ReadOnlyDatabase:
 
 
 @mcp.tool(description=TOOL_DESCRIPTION)
-def query_sql(sql: str, limit: int = 100) -> str:
+def query_sql(sql: str, limit: int = 100, ctx: Context | None = None) -> str:
     """Execute a read-only SQL query against the ICC evaluation database."""
     db = _get_db()
+    t0 = time.perf_counter()
+    request_id = ctx.request_id if ctx else None
+    client_id = ctx.client_id if ctx else None
     try:
         results = db.execute_query(sql, limit=limit)
+        duration_ms = (time.perf_counter() - t0) * 1000
+        logger.bind(
+            tool="query_sql",
+            request_id=request_id,
+            client_id=client_id,
+            duration_ms=round(duration_ms, 2),
+            status="ok",
+            sql=sql[:200],
+            limit=limit,
+            row_count=len(results),
+        ).info("tool_call")
         return json.dumps(results, default=str)
     except ValueError as e:
+        duration_ms = (time.perf_counter() - t0) * 1000
+        logger.bind(
+            tool="query_sql",
+            request_id=request_id,
+            client_id=client_id,
+            duration_ms=round(duration_ms, 2),
+            status="error",
+            error=str(e),
+            sql=sql[:200],
+            limit=limit,
+        ).warning("tool_call")
         return json.dumps({"error": str(e)})
     except Exception as e:
-        logger.exception("Query failed: %s", sql[:200])
+        duration_ms = (time.perf_counter() - t0) * 1000
+        logger.bind(
+            tool="query_sql",
+            request_id=request_id,
+            client_id=client_id,
+            duration_ms=round(duration_ms, 2),
+            status="error",
+            error=str(e),
+            sql=sql[:200],
+            limit=limit,
+        ).error("tool_call")
         return json.dumps({"error": f"Query failed: {e}"})
 
 
 @mcp.tool()
-def list_tables() -> str:
+def list_tables(ctx: Context | None = None) -> str:
     """List all available tables in the ICC evaluation database."""
     db = _get_db()
-    tables = db.get_table_names()
-    return json.dumps(tables)
+    t0 = time.perf_counter()
+    request_id = ctx.request_id if ctx else None
+    client_id = ctx.client_id if ctx else None
+    try:
+        tables = db.get_table_names()
+        duration_ms = (time.perf_counter() - t0) * 1000
+        logger.bind(
+            tool="list_tables",
+            request_id=request_id,
+            client_id=client_id,
+            duration_ms=round(duration_ms, 2),
+            status="ok",
+            table_count=len(tables),
+        ).info("tool_call")
+        return json.dumps(tables)
+    except Exception as e:
+        duration_ms = (time.perf_counter() - t0) * 1000
+        logger.bind(
+            tool="list_tables",
+            request_id=request_id,
+            client_id=client_id,
+            duration_ms=round(duration_ms, 2),
+            status="error",
+            error=str(e),
+        ).error("tool_call")
+        return json.dumps({"error": f"Failed to list tables: {e}"})
 
 
 @mcp.tool()
-def describe_table(table_name: str) -> str:
+def describe_table(table_name: str, ctx: Context | None = None) -> str:
     """Describe the columns and types of a table.
 
     Example: describe_table("projects") returns column names, types, and nullability.
     """
     db = _get_db()
+    t0 = time.perf_counter()
+    request_id = ctx.request_id if ctx else None
+    client_id = ctx.client_id if ctx else None
     if table_name not in db.get_table_names():
+        duration_ms = (time.perf_counter() - t0) * 1000
+        logger.bind(
+            tool="describe_table",
+            request_id=request_id,
+            client_id=client_id,
+            duration_ms=round(duration_ms, 2),
+            status="error",
+            error=f"Unknown table: {table_name}",
+            table_name=table_name,
+        ).warning("tool_call")
         return json.dumps({"error": f"Unknown table: {table_name}. Use list_tables() to see available tables."})
     try:
         results = db.execute_query(f"DESCRIBE {table_name}", limit=1000)
+        duration_ms = (time.perf_counter() - t0) * 1000
+        logger.bind(
+            tool="describe_table",
+            request_id=request_id,
+            client_id=client_id,
+            duration_ms=round(duration_ms, 2),
+            status="ok",
+            table_name=table_name,
+            column_count=len(results),
+        ).info("tool_call")
         return json.dumps(results, default=str)
     except Exception as e:
+        duration_ms = (time.perf_counter() - t0) * 1000
+        logger.bind(
+            tool="describe_table",
+            request_id=request_id,
+            client_id=client_id,
+            duration_ms=round(duration_ms, 2),
+            status="error",
+            error=str(e),
+            table_name=table_name,
+        ).error("tool_call")
         return json.dumps({"error": f"Failed to describe table: {e}"})
+
+
+class _InterceptHandler(logging.Handler):
+    """Route stdlib logging into loguru."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+        logger.opt(depth=6, exception=record.exc_info).log(level, record.getMessage())
 
 
 def main() -> None:
@@ -175,14 +280,20 @@ def main() -> None:
     parser.add_argument("-v", "--verbose", action="store_true", help="Debug logging")
     args = parser.parse_args()
 
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    # Configure loguru: JSON-serialized logs to stderr
+    logger.remove()
+    logger.add(
+        sys.stderr,
+        level="DEBUG" if args.verbose else "INFO",
+        serialize=True,
     )
 
+    # Intercept stdlib logging (uvicorn, mcp library) into loguru
+    logging.basicConfig(handlers=[_InterceptHandler()], level=0, force=True)
+
     _db = ReadOnlyDatabase(args.db)
-    logger.info("Loaded database: %s", args.db)
-    logger.info("Tables: %s", _db.get_table_names())
+    logger.info("Loaded database: {db_path}", db_path=str(args.db))
+    logger.info("Tables: {tables}", tables=_db.get_table_names())
 
     mcp.settings.host = args.host
     mcp.settings.port = args.port

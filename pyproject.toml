@@ -16,6 +16,7 @@ dependencies = [
     "google-auth-oauthlib>=1.2.4",
     "mcp[cli]>=1.26.0",
     "duckdb>=1.4.4",
+    "loguru>=0.7",
 ]
 
 [dependency-groups]
