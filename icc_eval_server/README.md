@@ -1,4 +1,4 @@
-# icc_eval_server
+# ICC Eval MCP server
 
 MCP server that exposes the ICC grant evaluation data via read-only SQL queries over DuckDB.
 
