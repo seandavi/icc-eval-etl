@@ -63,6 +63,12 @@ Nine JSONL files are written to the output directory:
 | `citing_openalex.jsonl` | OpenAlex | Work records for citing publications |
 | `github_core.jsonl` | GitHub | Repositories tagged with core project ID topics |
 
+## MCP Server
+
+An MCP server exposes the collected data via read-only SQL queries over DuckDB. A public instance is available at `https://icc-eval-mcp.cancerdatasci.org/mcp`.
+
+See [`icc_eval_server/README.md`](icc_eval_server/README.md) for setup and usage details.
+
 ## Roadmap
 
 ### Data Collection
@@ -80,6 +86,7 @@ Nine JSONL files are written to the output directory:
 
 ### Platform
 
+- [x] Public MCP server for database access
 - [ ] User authentication
 - [ ] Data access control (authorization)
 
