@@ -1,19 +1,20 @@
-# icc_eval_server — CLAUDE.md
+# database_mcp_server — CLAUDE.md
+
 
 Local guidance for the MCP server package. See the root `CLAUDE.md` for the overall project.
 
 ## Quick Reference
 
-- **Materialize**: `uv run python -m icc_eval_server.materialize`
-- **Run server**: `uv run python -m icc_eval_server.server`
+- **Materialize**: `uv run python -m database_mcp_server.materialize`
+- **Run server**: `uv run python -m database_mcp_server.server`
 - **Dependencies**: `mcp[cli]`, `duckdb` (in root pyproject.toml)
 
 ## Module Layout
 
 ```
-icc_eval_server/
+database_mcp_server/
 ├── __init__.py          # empty
-├── __main__.py          # entry: python -m icc_eval_server
+├── __main__.py          # entry: python -m database_mcp_server
 ├── materialize.py       # JSONL → DuckDB materialization
 ├── db.py                # ReadOnlyDatabase: validated SQL execution
 └── server.py            # FastMCP server with query_sql, list_tables, describe_table

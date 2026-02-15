@@ -24,7 +24,7 @@ class ReadOnlyDatabase:
         if not db_path.exists():
             raise FileNotFoundError(
                 f"Database not found: {db_path}. "
-                "Run 'python -m icc_eval_server.materialize' first."
+                "Run 'python -m database_mcp_server.materialize' first."
             )
         self._db_path = db_path
         self._con = duckdb.connect(str(db_path), read_only=True)

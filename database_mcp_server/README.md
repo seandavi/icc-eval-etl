@@ -31,10 +31,10 @@ This section covers local development. For deployment notes, see [DEPLOYMENT.md]
 uv run python main.py
 
 # 2. Materialize JSONL into a DuckDB database
-uv run python -m icc_eval_server.materialize
+uv run python -m database_mcp_server.materialize
 
 # 3. Start the MCP server
-uv run python -m icc_eval_server.server
+uv run python -m database_mcp_server.server
 ```
 
 The server starts on `http://0.0.0.0:8000` with the MCP endpoint at `/mcp`.
@@ -46,7 +46,7 @@ The server starts on `http://0.0.0.0:8000` with the MCP endpoint at `/mcp`.
 Converts the JSONL output files into a single DuckDB database file.
 
 ```bash
-uv run python -m icc_eval_server.materialize [OPTIONS]
+uv run python -m database_mcp_server.materialize [OPTIONS]
 ```
 
 | Option | Default | Description |
@@ -60,7 +60,7 @@ uv run python -m icc_eval_server.materialize [OPTIONS]
 Runs the FastMCP server with streamable HTTP transport.
 
 ```bash
-uv run python -m icc_eval_server.server [OPTIONS]
+uv run python -m database_mcp_server.server [OPTIONS]
 ```
 
 | Option | Default | Description |

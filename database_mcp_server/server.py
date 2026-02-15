@@ -1,8 +1,8 @@
 """MCP server exposing ICC evaluation data via read-only SQL queries.
 
 Usage:
-    uv run python -m icc_eval_server.server
-    uv run python -m icc_eval_server.server --db output/icc-eval.duckdb --port 8000
+    uv run python -m database_mcp_server.server
+    uv run python -m database_mcp_server.server --db output/icc-eval.duckdb --port 8000
 """
 
 import argparse
@@ -13,7 +13,7 @@ from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 
-from icc_eval_server.db import ReadOnlyDatabase
+from database_mcp_server.db import ReadOnlyDatabase
 
 logger = logging.getLogger(__name__)
 

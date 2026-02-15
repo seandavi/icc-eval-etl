@@ -4,8 +4,8 @@ Reads icc-data-views.sql to create views over the JSONL output files,
 then materializes each view as a permanent table in output/icc-eval.duckdb.
 
 Usage:
-    uv run python -m icc_eval_server.materialize
-    uv run python -m icc_eval_server.materialize --output output/icc-eval.duckdb
+    uv run python -m database_mcp_server.materialize
+    uv run python -m database_mcp_server.materialize --output output/icc-eval.duckdb
 """
 
 import argparse

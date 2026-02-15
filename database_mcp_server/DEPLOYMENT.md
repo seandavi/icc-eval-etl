@@ -35,7 +35,7 @@ The DuckDB file must exist before building the image since it gets baked in:
 
 ```bash
 # Materialize JSONL data into DuckDB (if not already done)
-uv run python -m icc_eval_server.materialize
+uv run python -m database_mcp_server.materialize
 
 # Build and start
 docker compose up -d --build
@@ -52,7 +52,7 @@ docker compose down
 The database is baked into the Docker image at build time. To update:
 
 1. Re-run the ETL pipeline: `uv run python main.py`
-2. Re-materialize: `uv run python -m icc_eval_server.materialize`
+2. Re-materialize: `uv run python -m database_mcp_server.materialize`
 3. Rebuild and redeploy: `docker compose up -d --build`
 
 ## MCP endpoint

@@ -10,7 +10,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy application code
-COPY icc_eval_server/ icc_eval_server/
+COPY database_mcp_server/ database_mcp_server/
 
 # Copy the database file (must be built before docker build)
 COPY output/icc-eval.duckdb output/icc-eval.duckdb
@@ -22,4 +22,4 @@ USER appuser
 
 EXPOSE 8000
 
-CMD ["/app/.venv/bin/python", "-m", "icc_eval_server.server", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/.venv/bin/python", "-m", "database_mcp_server.server", "--host", "0.0.0.0", "--port", "8000"]

@@ -51,7 +51,7 @@ DuckDB views over these files: `icc-data-views.sql`
 
 ## MCP Server
 
-The `icc_eval_server` package exposes the data via a FastMCP server (streamable HTTP transport).
+The `database_mcp_server` package exposes the data via a FastMCP server (streamable HTTP transport).
 
 ### Data flow
 

@@ -67,7 +67,7 @@ Nine JSONL files are written to the output directory:
 
 An MCP server exposes the collected data via read-only SQL queries over DuckDB. A public instance is available at `https://icc-eval-mcp.cancerdatasci.org/mcp`.
 
-See [`icc_eval_server/README.md`](icc_eval_server/README.md) for setup and usage details.
+See [`database_mcp_server/README.md`](database_mcp_server/README.md) for setup and usage details.
 
 ## Roadmap
 
