@@ -2,7 +2,29 @@
 
 MCP server that exposes the ICC grant evaluation data via read-only SQL queries over DuckDB.
 
-## Quick Start
+## Usage
+
+A public instance is available at `https://icc-eval-mcp.cancerdatasci.org/mcp` (streamable HTTP transport). No authentication required.
+
+### Claude Desktop / Claude Code
+
+Add to your MCP server configuration (`~/.claude/settings.json` for Claude Code, or Claude Desktop settings):
+
+```json
+{
+  "mcpServers": {
+    "icc-eval": {
+      "url": "https://icc-eval-mcp.cancerdatasci.org/mcp"
+    }
+  }
+}
+```
+
+# Local development
+
+This section covers local development. For deployment notes, see [DEPLOYMENT.md](DEPLOYMENT.md)
+
+## Quick start
 
 ```bash
 # 1. Run the ETL pipeline (if not already done)
@@ -96,23 +118,7 @@ docker build -t icc-eval-server .
 docker run -p 8000:8000 icc-eval-server
 ```
 
-## Usage
 
-A public instance is available at `https://icc-eval-mcp.cancerdatasci.org/mcp` (streamable HTTP transport). No authentication required.
-
-### Claude Desktop / Claude Code
-
-Add to your MCP server configuration (`~/.claude/settings.json` for Claude Code, or Claude Desktop settings):
-
-```json
-{
-  "mcpServers": {
-    "icc-eval": {
-      "url": "https://icc-eval-mcp.cancerdatasci.org/mcp"
-    }
-  }
-}
-```
 
 ### Python client
 
