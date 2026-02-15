@@ -96,17 +96,19 @@ docker build -t icc-eval-server .
 docker run -p 8000:8000 icc-eval-server
 ```
 
-## Connecting
+## Usage
+
+A public instance is available at `https://icc-eval-mcp.cancerdatasci.org/mcp` (streamable HTTP transport). No authentication required.
 
 ### Claude Desktop / Claude Code
 
-Add to your MCP server configuration:
+Add to your MCP server configuration (`~/.claude/settings.json` for Claude Code, or Claude Desktop settings):
 
 ```json
 {
   "mcpServers": {
     "icc-eval": {
-      "url": "http://localhost:8000/mcp"
+      "url": "https://icc-eval-mcp.cancerdatasci.org/mcp"
     }
   }
 }
@@ -118,10 +120,14 @@ Add to your MCP server configuration:
 from mcp.client.streamable_http import streamablehttp_client
 from mcp.client.session import ClientSession
 
-async with streamablehttp_client("http://localhost:8000/mcp") as (read, write, _):
+async with streamablehttp_client("https://icc-eval-mcp.cancerdatasci.org/mcp") as (read, write, _):
     async with ClientSession(read, write) as session:
         await session.initialize()
         result = await session.call_tool("query_sql", {
             "sql": "SELECT count(*) FROM projects"
         })
 ```
+
+### Local development
+
+If running the server locally, replace the URL with `http://localhost:8000/mcp`.
