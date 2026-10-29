@@ -23,11 +23,24 @@ from opentelemetry.trace import StatusCode
 from database_mcp_server.db import ReadOnlyDatabase
 
 TOOL_DESCRIPTION = """\
-Execute a read-only SQL query against the ICC grant evaluation database.
+Execute a read-only SQL query against the CFDE grant evaluation database.
 
-This database contains NIH grant records, associated publications, citation
-metrics, OpenAlex work records, and GitHub repositories for a collection of
-NIH-funded projects.
+This database covers a fixed set of about a dozen NIH Common Fund Data
+Ecosystem (CFDE) grants (OT2/U54/U24, FY2019 onward): NIH RePORTER funding
+records, linked publications, citation metrics, OpenAlex work records, the
+papers that cite them, and GitHub repositories tagged with the grant IDs.
+It does not cover NIH as a whole.
+
+## Notes
+
+- `projects` has one row per project-year. Group by core_project_num to count
+  or describe grants; SUM(award_amount) over all rows gives total funding.
+- core_project_num values are uppercase, e.g. 'OT2OD030161'.
+- `icite`/`openalex` describe the grants' own publications; `citing_icite`/
+  `citing_openalex` describe the papers that cite them (via citation_links).
+- Some grants have no linked publications; that is real data, not an error.
+- List the grants with:
+  SELECT DISTINCT core_project_num, project_title FROM projects
 
 ## Tables
 
@@ -111,9 +124,16 @@ GROUP BY ci.journal ORDER BY citation_count DESC LIMIT 10
 mcp = MCPServer(
     "ICC Grant Evaluation Data",
     instructions=(
-        "This server provides read-only SQL access to NIH grant evaluation data "
-        "including grants, publications, citation metrics, OpenAlex records, and "
-        "GitHub repositories. Use the query_sql tool to run SQL queries."
+        "Read-only SQL access to evaluation data for the NIH Common Fund Data "
+        "Ecosystem (CFDE): a fixed set of about a dozen CFDE-funded grants "
+        "(OT2/U54/U24, FY2019 onward). For each grant: NIH RePORTER funding "
+        "records, linked publications (Europe PMC), citation metrics (iCite "
+        "RCR/NIH percentile, OpenAlex FWCI/open access), the papers that cite "
+        "them, and GitHub repositories tagged with the grant ID. Use it to answer "
+        "questions about this portfolio's funding, publications, scholarly "
+        "impact, and software; it does not cover NIH as a whole. Query with "
+        "query_sql; run SELECT DISTINCT core_project_num, project_title FROM "
+        "projects to see the grant list."
     ),
 )
 
