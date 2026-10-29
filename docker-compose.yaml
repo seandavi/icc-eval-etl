@@ -3,6 +3,11 @@ services:
     build: .
     environment:
       - PYTHONUNBUFFERED=1
+      # OpenTelemetry tracing: off unless OTEL_EXPORTER_OTLP_ENDPOINT is set (see DEPLOYMENT.md)
+      - OTEL_EXPORTER_OTLP_ENDPOINT
+      - OTEL_EXPORTER_OTLP_PROTOCOL
+      - OTEL_EXPORTER_OTLP_HEADERS
+      - OTEL_SERVICE_NAME=icc-eval-mcp
     restart: unless-stopped
     read_only: true
     tmpfs:

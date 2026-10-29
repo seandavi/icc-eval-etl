@@ -30,7 +30,7 @@ database_mcp_server/
 ├── __main__.py          # entry: python -m database_mcp_server
 ├── materialize.py       # JSONL → DuckDB materialization (reads icc-data-views.sql)
 ├── db.py                # ReadOnlyDatabase: validated SQL execution
-├── server.py            # FastMCP server with query_sql, list_tables, describe_table
+├── server.py            # MCPServer (mcp 2.x) with query_sql, list_tables, describe_table
 ├── CLAUDE.md            # local agent docs for the MCP server
 └── README.md            # usage, tools, tables, security, Docker
 ```

@@ -57,7 +57,7 @@ uv run python -m database_mcp_server.materialize [OPTIONS]
 
 ### Server
 
-Runs the FastMCP server with streamable HTTP transport.
+Runs the MCPServer (mcp 2.x) with streamable HTTP transport.
 
 ```bash
 uv run python -m database_mcp_server.server [OPTIONS]

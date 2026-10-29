@@ -14,12 +14,15 @@ dependencies = [
     "google-analytics-data>=0.20.0",
     "google-analytics-admin>=0.27.0",
     "google-auth-oauthlib>=1.2.4",
-    "mcp[cli]>=1.26.0",
+    "mcp[cli]>=2.3,<3",
     "duckdb>=1.4.4",
     "loguru>=0.7",
+    "opentelemetry-distro>=0.66b2",
+    "opentelemetry-exporter-otlp>=1.45.2",
 ]
 
 [dependency-groups]
 dev = [
     "matplotlib>=3.10.8",
+    "pytest>=9.2.0",
 ]
