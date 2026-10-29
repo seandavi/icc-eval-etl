@@ -51,12 +51,12 @@ DuckDB views over these files: `icc-data-views.sql`
 
 ## MCP Server
 
-The `database_mcp_server` package exposes the data via a FastMCP server (streamable HTTP transport).
+The `database_mcp_server` package exposes the data via an MCPServer (mcp 2.x) (streamable HTTP transport).
 
 ### Data flow
 
 ```
-output/*.jsonl → materialize.py → output/icc-eval.duckdb → server.py (FastMCP)
+output/*.jsonl → materialize.py → output/icc-eval.duckdb → server.py (MCPServer)
 ```
 
 ### Security layers

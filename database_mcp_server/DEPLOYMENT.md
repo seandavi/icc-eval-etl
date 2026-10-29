@@ -65,6 +65,29 @@ Transport: `streamable-http`
 
 ## Key configuration notes
 
-- **DNS rebinding protection** is disabled in the MCP server (`server.py`) because Traefik handles host validation and TLS upstream. The `FastMCP` default constructor enables it for localhost, which conflicts with reverse-proxy deployments.
+- **DNS rebinding protection** is disabled in the MCP server (`server.py`) because Traefik handles host validation and TLS upstream. `MCPServer.run()` enables it by default when bound to localhost, which conflicts with reverse-proxy deployments.
 - **Read-only filesystem** — the container runs with `read_only: true` and a tmpfs at `/tmp`. The CMD invokes the venv Python directly (`/app/.venv/bin/python`) rather than `uv run`, which would try to write to the venv at runtime.
 - **Non-root user** — the container runs as `appuser`.
+
+## Tracing (OpenTelemetry)
+
+mcp 2.x wraps every MCP request in an OpenTelemetry span (`tools/call query_sql`, with `gen_ai.tool.name`, `jsonrpc.request.id`, ...). `query_sql` adds `db.query.text` (first 200 chars), `db.response.returned_rows` and an error status for failed queries. Clients that send a W3C `traceparent` in `_meta` get their traces joined to ours.
+
+Tracing is off unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set; with it unset the server behaves exactly as before. Standard env vars, passed through by `docker-compose.yaml`:
+
+| Variable | Example | Notes |
+|---|---|---|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://otel-collector:4318` | Enables tracing |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` | Default `grpc` (port 4317) |
+| `OTEL_EXPORTER_OTLP_HEADERS` | `authorization=Bearer%20xyz` | Auth for hosted backends |
+| `OTEL_SERVICE_NAME` | `icc-eval-mcp` | Defaults to `icc-eval-mcp` |
+
+Only traces are exported (`OTEL_METRICS_EXPORTER` / `OTEL_LOGS_EXPORTER` default to `none`). While a span is active, loguru JSON records carry `trace_id` and `span_id` in `extra`.
+
+Quick local check with a collector printing spans:
+
+```bash
+docker run --rm -p 4318:4318 otel/opentelemetry-collector  # use a config with an otlp receiver and `debug` exporter (verbosity: detailed) to see span attributes
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf \
+  uv run python -m database_mcp_server.server
+```

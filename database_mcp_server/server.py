@@ -8,14 +8,17 @@ Usage:
 import argparse
 import json
 import logging
+import os
 import sys
 import time
 from pathlib import Path
 
 from loguru import logger
-from mcp.server.fastmcp import FastMCP
-from mcp.server.fastmcp.server import Context
+from mcp.server.mcpserver import Context, MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
+
+from opentelemetry import trace
+from opentelemetry.trace import StatusCode
 
 from database_mcp_server.db import ReadOnlyDatabase
 
@@ -105,7 +108,7 @@ FROM citation_links cl JOIN citing_icite ci ON cl.citing_pmid = ci.pmid
 GROUP BY ci.journal ORDER BY citation_count DESC LIMIT 10
 """
 
-mcp = FastMCP(
+mcp = MCPServer(
     "ICC Grant Evaluation Data",
     instructions=(
         "This server provides read-only SQL access to NIH grant evaluation data "
@@ -130,14 +133,16 @@ def query_sql(sql: str, limit: int = 100, ctx: Context | None = None) -> str:
     db = _get_db()
     t0 = time.perf_counter()
     request_id = ctx.request_id if ctx else None
-    client_id = ctx.client_id if ctx else None
+    # Enrich the SDK's "tools/call query_sql" span; a no-op without a tracer provider.
+    span = trace.get_current_span()
+    span.set_attributes({"db.system.name": "duckdb", "db.query.text": sql[:200]})
     try:
         results = db.execute_query(sql, limit=limit)
         duration_ms = (time.perf_counter() - t0) * 1000
+        span.set_attribute("db.response.returned_rows", len(results))
         logger.bind(
             tool="query_sql",
             request_id=request_id,
-            client_id=client_id,
             duration_ms=round(duration_ms, 2),
             status="ok",
             sql=sql[:200],
@@ -150,26 +155,26 @@ def query_sql(sql: str, limit: int = 100, ctx: Context | None = None) -> str:
         logger.bind(
             tool="query_sql",
             request_id=request_id,
-            client_id=client_id,
             duration_ms=round(duration_ms, 2),
             status="error",
             error=str(e),
             sql=sql[:200],
             limit=limit,
         ).warning("tool_call")
+        span.set_status(StatusCode.ERROR, str(e))
         return json.dumps({"error": str(e)})
     except Exception as e:
         duration_ms = (time.perf_counter() - t0) * 1000
         logger.bind(
             tool="query_sql",
             request_id=request_id,
-            client_id=client_id,
             duration_ms=round(duration_ms, 2),
             status="error",
             error=str(e),
             sql=sql[:200],
             limit=limit,
         ).error("tool_call")
+        span.set_status(StatusCode.ERROR, str(e))
         return json.dumps({"error": f"Query failed: {e}"})
 
 
@@ -179,14 +184,12 @@ def list_tables(ctx: Context | None = None) -> str:
     db = _get_db()
     t0 = time.perf_counter()
     request_id = ctx.request_id if ctx else None
-    client_id = ctx.client_id if ctx else None
     try:
         tables = db.get_table_names()
         duration_ms = (time.perf_counter() - t0) * 1000
         logger.bind(
             tool="list_tables",
             request_id=request_id,
-            client_id=client_id,
             duration_ms=round(duration_ms, 2),
             status="ok",
             table_count=len(tables),
@@ -197,7 +200,6 @@ def list_tables(ctx: Context | None = None) -> str:
         logger.bind(
             tool="list_tables",
             request_id=request_id,
-            client_id=client_id,
             duration_ms=round(duration_ms, 2),
             status="error",
             error=str(e),
@@ -214,13 +216,11 @@ def describe_table(table_name: str, ctx: Context | None = None) -> str:
     db = _get_db()
     t0 = time.perf_counter()
     request_id = ctx.request_id if ctx else None
-    client_id = ctx.client_id if ctx else None
     if table_name not in db.get_table_names():
         duration_ms = (time.perf_counter() - t0) * 1000
         logger.bind(
             tool="describe_table",
             request_id=request_id,
-            client_id=client_id,
             duration_ms=round(duration_ms, 2),
             status="error",
             error=f"Unknown table: {table_name}",
@@ -233,7 +233,6 @@ def describe_table(table_name: str, ctx: Context | None = None) -> str:
         logger.bind(
             tool="describe_table",
             request_id=request_id,
-            client_id=client_id,
             duration_ms=round(duration_ms, 2),
             status="ok",
             table_name=table_name,
@@ -245,13 +244,38 @@ def describe_table(table_name: str, ctx: Context | None = None) -> str:
         logger.bind(
             tool="describe_table",
             request_id=request_id,
-            client_id=client_id,
             duration_ms=round(duration_ms, 2),
             status="error",
             error=str(e),
             table_name=table_name,
         ).error("tool_call")
         return json.dumps({"error": f"Failed to describe table: {e}"})
+
+
+def _configure_tracing() -> None:
+    """Export the SDK's spans over OTLP, configured by the standard OTEL_* env vars.
+
+    Without OTEL_EXPORTER_OTLP_ENDPOINT no tracer provider is installed, so spans stay no-ops.
+    """
+    endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+    if not endpoint:
+        return
+    os.environ.setdefault("OTEL_SERVICE_NAME", "icc-eval-mcp")
+    # Only traces are wanted; the distro would otherwise also push metrics and logs.
+    os.environ.setdefault("OTEL_METRICS_EXPORTER", "none")
+    os.environ.setdefault("OTEL_LOGS_EXPORTER", "none")
+    from opentelemetry.instrumentation.auto_instrumentation import initialize
+
+    initialize()
+    logger.info("OpenTelemetry tracing enabled: {endpoint}", endpoint=endpoint)
+
+
+def _add_trace_ids(record) -> None:
+    """Stamp the active OTel trace/span ids on log records so logs and traces line up."""
+    span_ctx = trace.get_current_span().get_span_context()
+    if span_ctx.is_valid:
+        record["extra"]["trace_id"] = format(span_ctx.trace_id, "032x")
+        record["extra"]["span_id"] = format(span_ctx.span_id, "016x")
 
 
 class _InterceptHandler(logging.Handler):
@@ -287,20 +311,23 @@ def main() -> None:
         level="DEBUG" if args.verbose else "INFO",
         serialize=True,
     )
+    logger.configure(patcher=_add_trace_ids)
 
     # Intercept stdlib logging (uvicorn, mcp library) into loguru
     logging.basicConfig(handlers=[_InterceptHandler()], level=0, force=True)
+
+    _configure_tracing()
 
     _db = ReadOnlyDatabase(args.db)
     logger.info("Loaded database: {db_path}", db_path=str(args.db))
     logger.info("Tables: {tables}", tables=_db.get_table_names())
 
-    mcp.settings.host = args.host
-    mcp.settings.port = args.port
-    mcp.settings.transport_security = TransportSecuritySettings(
-        enable_dns_rebinding_protection=False,
+    mcp.run(
+        transport="streamable-http",
+        host=args.host,
+        port=args.port,
+        transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
     )
-    mcp.run(transport="streamable-http")
 
 
 if __name__ == "__main__":
